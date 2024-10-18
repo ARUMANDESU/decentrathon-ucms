@@ -76,6 +76,7 @@ jobs:
             key: ${{ secrets.SSH_SECRET_KEY }}
             passphrase: ${{ secrets.PASSPHRASE }}
             username: ${{ secrets.SSH_USERNAME }}
+            password: ${{ secrets.SSH_PASSWORD }}
             script: |
               docker pull ${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
               docker stop telegrambot || true

@@ -42,7 +42,7 @@ jobs:
               file: ${{env.DOCKER_FILE_PATH}}
               platforms: linux/amd64,linux/arm64
               push: true
-              tags: ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest,${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:${{env.DATE}}
+              tags: ${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest,${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:${{env.DATE}}
           - name: send telegram message on push
             uses: appleboy/telegram-action@master
             if: ${{ job.status != 'success'}}
@@ -77,14 +77,14 @@ jobs:
             passphrase: ${{ secrets.PASSPHRASE }}
             username: ${{ secrets.SSH_USERNAME }}
             script: |
-              docker pull ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
+              docker pull ${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
               docker stop telegrambot || true
               docker rm telegrambot || true
               docker run -d --name telegrambot \
               -e TELEGRAM_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }} \
               -e TELEGRAM_URL=${{ env.TELEGRAM_URL }} \
               -e TELEGRAM_WEBHOOK_URL=${{ env.TELEGRAM_WEBHOOK_URL }} \
-              -p 4000:4000 ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
+              -p 4000:4000 ${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
               
               
 

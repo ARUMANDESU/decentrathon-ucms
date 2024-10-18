@@ -1,13 +1,7 @@
-# Build
 FROM golang:1.23.0-alpine AS builder
 
-ENV GO111MODULE=on
-ENV GOPATH=/
-
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy Go module files from the root project directory
 COPY go.mod go.sum ./
 RUN go mod download
 

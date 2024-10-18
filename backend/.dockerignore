@@ -1,8 +1,0 @@
-.gitignore
-.idea
-.git
-config
-.env.*
-.env
-tests
-.github

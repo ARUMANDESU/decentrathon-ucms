@@ -42,7 +42,7 @@ jobs:
           cd frontend
 
       - name: Install deps
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Build
         run: npm run build

@@ -11,7 +11,7 @@ env:
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   DOCKER_HUB: ${{ secrets.DOCKER_HUB }}
   DOCKER_ORG: ${{ secrets.DOCKER_ORG }}
-  DOCKER_FILE_PATH: "cmd/telegrambot/Dockerfile"
+  DOCKER_FILE_PATH: "backend/cmd/telegrambot/Dockerfile"
   IMAGE_NAME: "telegrambot"
 
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

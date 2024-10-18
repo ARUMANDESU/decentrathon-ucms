@@ -23,11 +23,18 @@ func NewBot(cfg config.Telegram, logger *slog.Logger) (*Bot, error) {
 	log := logger.With("op", op)
 
 	httpServer := NewHTTPServer(cfg)
+	log.Info("http server started", slog.String("addr", cfg.WebhookURL))
 
 	webhook := &tb.Webhook{
 		Listen:   cfg.URL,
 		Endpoint: &tb.WebhookEndpoint{PublicURL: cfg.WebhookURL},
 	}
+
+	log.Info(
+		"webhook created",
+		slog.String("webhook", cfg.WebhookURL),
+		slog.String("url", cfg.URL),
+	)
 
 	spamProtected := tb.NewMiddlewarePoller(webhook, func(upd *tb.Update) bool {
 		if upd.Message == nil {
@@ -49,6 +56,7 @@ func NewBot(cfg config.Telegram, logger *slog.Logger) (*Bot, error) {
 		log.Error("failed to create new bot", logs.Err(err))
 		return nil, err
 	}
+	log.Debug("bot created", slog.String("token", cfg.Token)) // @@TODO: remove later , this is for debugging
 
 	return &Bot{
 		bot:        b,

@@ -32,6 +32,7 @@ func main() {
 		log.Error("failed to create telegram bot", logs.Err(err))
 		return
 	}
+	log.Info("telegram bot created")
 
 	go func() {
 		err := bot.Start()
@@ -40,6 +41,7 @@ func main() {
 			panic(err)
 		}
 	}()
+	log.Info("telegram bot started")
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

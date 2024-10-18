@@ -1,0 +1,107 @@
+name: Dev Telegram Bot
+
+on:
+  workflow_dispatch:
+
+env:
+  TELEGRAM_NOTIFY_BOT_TOKEN: ${{ secrets.TELEGRAM_NOTIFY_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_HUB: ${{ secrets.DOCKER_HUB }}
+  DOCKER_ORG: ${{ secrets.DOCKER_ORG }}
+  DOCKER_FILE_PATH: "cmd/telegrambot/Dockerfile"
+  IMAGE_NAME: "telegrambot"
+
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_WEBHOOK_URL: ${{ secrets.TELEGRAM_WEBHOOK_URL }}
+  TELEGRAM_URL: ${{ secrets.TELEGRAM_URL }}
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+          - name: Set up QEMU
+            uses: docker/setup-qemu-action@v3
+          - name: Set up Docker Build
+            uses: docker/setup-buildx-action@v3
+          - name: Login to Docker Hub
+            uses: docker/login-action@v3
+            with:
+              username: ${{env.DOCKER_USERNAME}}
+              password: ${{env.DOCKER_PASSWORD}}
+          - name: Set date
+            run: echo "DATE=$(date +%s)" >> $GITHUB_ENV
+          - name: Build and push
+            uses: docker/build-push-action@v5
+            with:
+              context: .
+              file: ${{env.DOCKER_FILE_PATH}}
+              platforms: linux/amd64,linux/arm64
+              push: true
+              tags: ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest,${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:${{env.DATE}}
+          - name: send telegram message on push
+            uses: appleboy/telegram-action@master
+            if: ${{ job.status != 'success'}}
+            with:
+              to: ${{env.TELEGRAM_CHAT_ID }}
+              token: ${{ env.TELEGRAM_NOTIFY_BOT_TOKEN }}
+              format: markdown
+              message: |
+                ⛔⛔⛔ **Backend Commit Failed** ⛔⛔⛔
+                
+                👤 **Author**: ${{ github.actor }}  
+                📝 **Commit Message**: ${{ github.event.commits[0].message }}
+                
+                📦 **Repository**: [${{ github.repository }}](https://github.com/${{ github.repository }})  
+                🔗 **See Changes**: [View Commit](https://github.com/${{ github.repository }}/commit/${{github.sha}})  
+                
+                ⛔ **Status**: ${{ job.status }}
+
+    deploy:
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Install SSH client
+          run: sudo apt-get install -y openssh-client
+        - name: Deploy to DigitalOcean Droplet
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.SERVER_IP }}
+            key: ${{ secrets.SSH_SECRET_KEY }}
+            passphrase: ${{ secrets.PASSPHRASE }}
+            username: ${{ secrets.SSH_USERNAME }}
+            script: |
+              docker pull ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
+              docker stop telegrambot || true
+              docker rm telegrambot || true
+              docker run -d --name telegrambot \
+              -e TELEGRAM_TOKEN=${{ env.TELEGRAM_BOT_TOKEN }} \
+              -e TELEGRAM_URL=${{ env.TELEGRAM_URL }} \
+              -e TELEGRAM_WEBHOOK_URL=${{ env.TELEGRAM_WEBHOOK_URL }} \
+              -p 4000:4000 ${{env.DOCKER_HUB}}/${{env.DOCKER_ORG}}/${{env.IMAGE_NAME}}:latest
+              
+              
+
+        - name: send telegram message on deploy
+          uses: appleboy/telegram-action@master
+          if: always()
+          with:
+            to: ${{ env.TELEGRAM_CHAT_ID }}
+            token: ${{ env.TELEGRAM_NOTIFY_BOT_TOKEN }}
+            format: markdown
+            message: |
+              💻 **Api-gateway Deployed on server** 
+              
+              👤 **Author**: ${{ github.actor }}  
+              📝 **Commit Message**: ${{ github.event.commits[0].message }}
+              
+              📦 **Repository**: [${{ github.repository }}](https://github.com/${{ github.repository }})  
+              🔗 **See Changes**: [View Commit](https://github.com/${{ github.repository }}/commit/${{github.sha}})  
+              
+              ⛔ **Status**: ${{ job.status }}

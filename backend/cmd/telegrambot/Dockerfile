@@ -1,0 +1,39 @@
+# Build
+FROM golang:1.23.0-alpine AS builder
+
+ENV GO111MODULE=on
+ENV GOPATH=/
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy Go module files from the root project directory
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the source code from the root project directory
+COPY . ./
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/build/telegrambot ./cmd/telegrambot
+
+# Start a new minimal image for the final stage
+FROM alpine:latest
+
+# Essentials
+RUN apk add -U tzdata
+ENV TZ=Asia/Almaty
+RUN cp /usr/share/zoneinfo/Asia/Almaty /etc/localtime
+
+WORKDIR /app
+
+# Copy the telegram bot binary from the builder stage
+COPY --from=builder /app/build/telegrambot /app/telegrambot
+
+ENV DATABASE_URL=""
+ENV TELEGRAM_TOKEN=""
+ENV TELEGRAM_WEBHOOK_URL=""
+ENV TELEGRAM_URL="localhost:4000"
+
+EXPOSE 4000
+
+CMD ["./telegrambot"]

@@ -37,15 +37,15 @@ jobs:
           node-version: 18
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Frontend
+      - name: Install deps
         run: |
           cd frontend
-
-      - name: Install deps
-        run: npm install --legacy-peer-deps
+          npm install --legacy-peer-deps
 
       - name: Build
-        run: npm run build
+        run:  |
+          cd frontend
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
